@@ -8,39 +8,71 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/mkdirjava/graphql-todos/graph/model"
 )
 
 // CreateTodo is the resolver for the createTodo field.
 func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	return &todo, nil
+	newTodo := &model.Todo{
+		ID:   uuid.NewString(),
+		Text: input.Text,
+	}
+	if len(input.UserID) > 0 {
+		if user, userErr := r.ModelCache.FindUserById(input.UserID); userErr != nil {
+			return nil, userErr
+		} else {
+			newTodo.User = user
+		}
+	}
+
+	r.ModelCache.AddToCache(newTodo)
+	return newTodo, nil
+}
+
+// CreateUser is the resolver for the createUser field.
+func (r *mutationResolver) CreateUser(ctx context.Context, userName string) (*model.User, error) {
+	return r.ModelCache.CreateUser(userName), nil
+}
+
+// AssignTodo is the resolver for the assignTodo field.
+func (r *mutationResolver) AssignTodo(ctx context.Context, todoID string, userID string) (*model.Todo, error) {
+	if todo, todoErr := r.ModelCache.AssignTodo(todoID, userID); todoErr != nil {
+		return nil, todoErr
+	} else {
+		return todo, nil
+	}
 }
 
 // Todos is the resolver for the todos field.
 func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	returningItems := []*model.Todo{&todo}
-	return returningItems, nil
+	return r.ModelCache.GetCache(), nil
 }
 
 // CurrentTodos is the resolver for the currentTodos field.
 func (r *subscriptionResolver) CurrentTodos(ctx context.Context) (<-chan []*model.Todo, error) {
-	returningItems := []*model.Todo{&todo}
-	ch := make(chan []*model.Todo)
+	ch := r.ModelCache.CreateSubscriber()
 
 	go func() {
 		defer close(ch)
-		select {
-		case <-ctx.Done(): // This runs when context gets cancelled. Subscription closes.
-			fmt.Println("Subscription Closed")
-			// Handle deregistration of the channel here. `close(ch)`
-			return // Remember to return to end the routine.
-
-		case ch <- returningItems: // This is the actual send.
-			// Our message went through, do nothing
-		}
+		<-ctx.Done() // This runs when context gets cancelled. Subscription closes.
+		fmt.Println("Subscription Closed")
+		// Handle deregistration of the channel here. `close(ch)`
 	}()
 
 	return ch, nil
+}
+
+// User is the resolver for the user field.
+func (r *todoResolver) User(ctx context.Context, obj *model.Todo) (*model.User, error) {
+	if obj.User == nil {
+		return nil, nil
+	}
+	if foundCacheUser := r.ModelCache.FindUser(obj); foundCacheUser == nil {
+		return nil, fmt.Errorf("cannot find user with a todo Id of %v", obj.ID)
+	} else {
+		return foundCacheUser, nil
+	}
 }
 
 // Mutation returns MutationResolver implementation.
@@ -52,22 +84,12 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 // Subscription returns SubscriptionResolver implementation.
 func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
-type subscriptionResolver struct{ *Resolver }
+// Todo returns TodoResolver implementation.
+func (r *Resolver) Todo() TodoResolver { return &todoResolver{r} }
 
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-var todo = model.Todo{
-	ID:   "1",
-	Text: "Hi there world",
-	Done: true,
-	User: &model.User{
-		ID:   "1",
-		Name: "bob",
-	},
-}
+type (
+	mutationResolver     struct{ *Resolver }
+	queryResolver        struct{ *Resolver }
+	subscriptionResolver struct{ *Resolver }
+	todoResolver         struct{ *Resolver }
+)

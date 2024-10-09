@@ -16,27 +16,86 @@ go to
 
     localhost:8080
 
-You should see a client with submission to the running graphql
+Supported Queries
 
-these are supported, they dont do anything interesting thouh
+query todosWithUser{
+  todos{
+    id
+    text
+    done
+    user{
+      id
+      name
+    }
+  }
+}
 
-    # subscription subs{
-    #   currentTodos{
-    #     done
-    #   }
-    # }
+query todoWithoutUser{
+  todos{
+    id
+    text
+    done
+  }
+}
 
-    # query q {
-    #   todos{
-    #     id
-    #   }
-    # }
+mutation assosaiteUserWithTodo{
+  assignTodo(todoId:"0711e7c1-d3dd-4872-b808-2fbcbb0a585d",userId:"668cae22-0a58-4ade-b18a-4e24685ae6ef") {
+    id
+    text
+    user{
+      id
+      name
+    }
+  }
+}
 
-    # mutation m {
-    #   createTodo(input:{
-    #     userId:"123"
-    #     text:"file"
-    #   }){
-    #     id
-    #   }
-    # }
+mutation createUser {
+  createUser(userName:"John"){
+    id
+    name
+  }
+}
+
+
+mutation createTodo {
+createTodo(input:{
+  text: "Go Shopping"
+}){
+id
+  text
+  done
+  user{
+id
+  name}
+
+}
+}
+
+mutation createTodoWithUser {
+createTodo(input:{
+  text: "Go Cook Somthing"
+  userId:"dad00df0-7adb-4aa4-a9b7-0b618821befc"
+}){
+id
+  text
+  done
+  user{
+id
+  name}
+
+}
+}
+
+subscription subscribeToData{
+  currentTodos{
+    id
+    text
+    done
+    user{
+      id
+      name
+    }
+  }
+}
+
+
