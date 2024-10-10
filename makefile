@@ -9,3 +9,9 @@ go_test:
 	go test -coverprofile=cover.out ./graph/model \
 		&& go tool cover -func=cover.out \
 		&& rm cover.out
+
+go_test_visual:
+	go test -coverprofile=cover.out ./graph/model \
+		&& go tool cover -html=cover.out \
+		&& rm cover.out
+	
