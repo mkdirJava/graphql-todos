@@ -95,7 +95,7 @@ func (m *ModelCache) CreateUser(userName string) *User {
 
 func (m *ModelCache) FindUserById(userId string) (*User, error) {
 	for _, user := range m.users {
-		if userId == userId {
+		if user.ID == userId {
 			return user, nil
 		}
 	}
