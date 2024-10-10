@@ -14,6 +14,7 @@ type ModelCacher interface {
 	CreateSubscriber() chan []*Todo
 	AssignTodo(string, string) (*Todo, error)
 	CreateUser(string) *User
+	GetAllUsers() []*User
 }
 
 func NewModelCache() ModelCacher {
@@ -100,4 +101,10 @@ func (m *ModelCache) FindUserById(userId string) (*User, error) {
 		}
 	}
 	return nil, fmt.Errorf("cannot find user with id %v", userId)
+}
+
+func (m *ModelCache) GetAllUsers() []*User {
+	usersCopy := make([]*User, len(m.users))
+	copy(usersCopy, m.users)
+	return usersCopy
 }

@@ -18,6 +18,14 @@ go to
 
 Supported Queries
 
+query getAllUsers{
+  getAllUsers{
+    id
+    name
+  }
+}
+
+
 query todosWithUser{
   todos{
     id

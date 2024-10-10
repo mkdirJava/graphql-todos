@@ -18,8 +18,9 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) 
 		ID:   uuid.NewString(),
 		Text: input.Text,
 	}
-	if len(input.UserID) > 0 {
-		if user, userErr := r.ModelCache.FindUserById(input.UserID); userErr != nil {
+	userIdInput := *input.UserID
+	if len(userIdInput) > 0 {
+		if user, userErr := r.ModelCache.FindUserById(userIdInput); userErr != nil {
 			return nil, userErr
 		} else {
 			newTodo.User = user
@@ -47,6 +48,11 @@ func (r *mutationResolver) AssignTodo(ctx context.Context, todoID string, userID
 // Todos is the resolver for the todos field.
 func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
 	return r.ModelCache.GetCache(), nil
+}
+
+// GetAllUsers is the resolver for the getAllUsers field.
+func (r *queryResolver) GetAllUsers(ctx context.Context) ([]*model.User, error) {
+	return r.ModelCache.GetAllUsers(), nil
 }
 
 // CurrentTodos is the resolver for the currentTodos field.
@@ -87,9 +93,7 @@ func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionRes
 // Todo returns TodoResolver implementation.
 func (r *Resolver) Todo() TodoResolver { return &todoResolver{r} }
 
-type (
-	mutationResolver     struct{ *Resolver }
-	queryResolver        struct{ *Resolver }
-	subscriptionResolver struct{ *Resolver }
-	todoResolver         struct{ *Resolver }
-)
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }
+type todoResolver struct{ *Resolver }
